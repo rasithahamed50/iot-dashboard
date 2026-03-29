@@ -137,4 +137,4 @@ if __name__ == "__main__":
     print("  Dashboard  ->  http://127.0.0.1:5000")
     print("  API JSON   ->  http://127.0.0.1:5000/api/sensors")
     print("  SSE stream ->  http://127.0.0.1:5000/api/stream\n")
-    app.run(host="127.0.0.1", port=5000, debug=False, threaded=True)
+    app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
