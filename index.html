@@ -1,0 +1,640 @@
+
+<h1>IoT Monitoring Dashboard</h1>
+
+<div class="container">
+    <div class="card">
+        <h2>Temperature</h2>
+        <div class="value">{{ temp }} °C</div>
+    </div>
+
+    <div class="card">
+        <h2>Humidity</h2>
+        <div class="value">{{ hum }} %</div>
+    </div>
+
+    <div class="card">
+        <h2>Status</h2>
+        <div class="value">{{ status }}</div>
+    </div>
+</div>
+
+<!-- GRAPH -->
+<canvas id="tempChart" width="600" height="300"></canvas>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const ctx = document.getElementById('tempChart').getContext('2d');
+
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            label: 'Temperature (°C)',
+            data: [],
+            borderColor: 'cyan',
+            backgroundColor: 'rgba(0,255,255,0.2)',
+            borderWidth: 3,
+            tension: 0.4
+        }]
+    }
+});
+
+function updateChart() {
+    fetch('/data')
+        .then(response => response.json())
+        .then(result => {
+            const time = new Date().toLocaleTimeString();
+
+            chart.data.labels.push(time);
+            chart.data.datasets[0].data.push(result.temp);
+
+            if (chart.data.labels.length > 10) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+
+            chart.update();
+        });
+}
+
+// update every 2 seconds
+setInterval(updateChart, 2000);
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IOT DASHBOARD</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --c1: #6c63ff;
+      --c2: #48d6c8;
+      --c3: #ff6b9d;
+      --c4: #ffc857;
+      --c5: #56cfb2;
+      --glass: rgba(255,255,255,0.08);
+      --glass-border: rgba(255,255,255,0.18);
+      --glass-hover: rgba(255,255,255,0.13);
+      --text: #f0f4ff;
+      --muted: rgba(200,210,255,0.5);
+      --font: 'DM Sans', sans-serif;
+      --mono: 'DM Mono', monospace;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      min-height: 100vh;
+      font-family: var(--font);
+      color: var(--text);
+      background: #0d0e1a;
+      overflow-x: hidden;
+    }
+
+    /* ── GRADIENT BG ORBS ── */
+    .bg {
+      position: fixed; inset: 0; z-index: 0;
+      overflow: hidden; pointer-events: none;
+    }
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); opacity: 0.45;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .orb1 { width:520px; height:520px; background:#6c63ff; top:-180px; left:-120px; animation-delay:0s; }
+    .orb2 { width:400px; height:400px; background:#48d6c8; bottom:-100px; right:-80px; animation-delay:-4s; }
+    .orb3 { width:300px; height:300px; background:#ff6b9d; top:40%; left:55%; animation-delay:-8s; }
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(40px,30px) scale(1.08); }
+    }
+
+    /* Subtle noise texture */
+    .bg::after {
+      content:''; position:absolute; inset:0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.4;
+    }
+
+    .page { position:relative; z-index:1; max-width:1280px; margin:0 auto; padding:28px 24px 48px; }
+
+    /* ── HEADER ── */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px; margin-bottom: 28px;
+    }
+
+    .header-left { display:flex; align-items:center; gap:14px; }
+
+    .logo-box {
+      width: 46px; height: 46px; border-radius: 14px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px);
+      display: flex; align-items:center; justify-content:center;
+      box-shadow: 0 8px 32px rgba(108,99,255,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+    }
+    .logo-box svg { width:22px; fill:var(--c2); filter: drop-shadow(0 0 6px var(--c2)); }
+
+    .header-title h1 {
+      font-size: 1.4rem; font-weight: 600; letter-spacing: 0.5px;
+      background: linear-gradient(135deg, #fff 0%, var(--c2) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header-title p { font-size: 0.72rem; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-top:2px; }
+
+    .header-right { display:flex; align-items:center; gap:14px; }
+
+    .glass-pill {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px); border-radius: 40px;
+      padding: 8px 16px; font-size: 0.78rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    #live-clock { font-family: var(--mono); font-size: 1rem; color: var(--c2); letter-spacing:1px; }
+    .pulse { width:8px; height:8px; border-radius:50%; background:var(--c5); position:relative; }
+    .pulse::after {
+      content:''; position:absolute; inset:-3px; border-radius:50%;
+      border: 2px solid var(--c5); animation: ripple 1.6s ease-out infinite;
+    }
+    @keyframes ripple { 0%{transform:scale(1);opacity:.8} 100%{transform:scale(2.2);opacity:0} }
+
+    /* ── ALERTS ── */
+    #alerts-wrap { display:flex; flex-direction:column; gap:8px; margin-bottom:24px; }
+    .alert-pill {
+      display:flex; align-items:center; gap:10px;
+      backdrop-filter: blur(24px);
+      border-radius: 12px; padding: 11px 18px;
+      font-size: 0.8rem; letter-spacing:.3px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+      animation: slideDown .3s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes slideDown { from{transform:translateY(-10px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .alert-pill.ok      { background:rgba(86,207,178,0.12); border:1px solid rgba(86,207,178,0.3); color:#56cfb2; }
+    .alert-pill.warning { background:rgba(255,200,87,0.12);  border:1px solid rgba(255,200,87,0.3);  color:#ffc857; }
+    .alert-pill.danger  { background:rgba(255,107,157,0.12); border:1px solid rgba(255,107,157,0.3); color:#ff6b9d; }
+
+    /* ── SENSOR CARDS ── */
+    .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-bottom:24px; }
+
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(28px);
+      border-radius: 22px; padding: 24px;
+      position: relative; overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12);
+      transition: transform .25s, box-shadow .25s, border-color .25s;
+      cursor: default;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+    .card.ct:hover { border-color: rgba(255,107,157,0.4); }
+    .card.ch:hover { border-color: rgba(72,214,200,0.4); }
+    .card.cp:hover { border-color: rgba(108,99,255,0.4); }
+    .card.ca:hover { border-color: rgba(255,200,87,0.4); }
+
+    /* frosted shine */
+    .card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:55%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 100%);
+      border-radius: 22px 22px 0 0; pointer-events:none;
+    }
+    /* coloured glow circle top-right */
+    .card .glow-circle {
+      position:absolute; top:-40px; right:-40px;
+      width:130px; height:130px; border-radius:50%;
+      filter: blur(40px); opacity:.55; pointer-events:none;
+      transition: opacity .3s;
+    }
+    .card:hover .glow-circle { opacity:.8; }
+    .card.ct .glow-circle { background: var(--c3); }
+    .card.ch .glow-circle { background: var(--c2); }
+    .card.cp .glow-circle { background: var(--c1); }
+    .card.ca .glow-circle { background: var(--c4); }
+
+    .card-icon { font-size: 1.4rem; margin-bottom: 12px; }
+    .card-label { font-size: 0.68rem; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+    .card-value { font-family:var(--mono); font-size: 2.6rem; font-weight:500; line-height:1; }
+    .card.ct .card-value { color:var(--c3); text-shadow: 0 0 20px rgba(255,107,157,.5); }
+    .card.ch .card-value { color:var(--c2); text-shadow: 0 0 20px rgba(72,214,200,.5); }
+    .card.cp .card-value { color:var(--c1); text-shadow: 0 0 20px rgba(108,99,255,.5); }
+    .card.ca .card-value { color:var(--c4); text-shadow: 0 0 20px rgba(255,200,87,.5); }
+    .card-unit { font-size:.9rem; opacity:.5; margin-left:2px; }
+
+    .card-status {
+      display:inline-flex; align-items:center; gap:5px;
+      margin-top:10px; padding:4px 10px; border-radius:30px;
+      font-size:.65rem; letter-spacing:1.5px; text-transform:uppercase;
+      backdrop-filter:blur(10px);
+    }
+    .s-ok   { background:rgba(86,207,178,.12); color:#56cfb2; border:1px solid rgba(86,207,178,.25); }
+    .s-warn { background:rgba(255,200,87,.12);  color:#ffc857; border:1px solid rgba(255,200,87,.25); }
+    .s-crit { background:rgba(255,107,157,.12); color:#ff6b9d; border:1px solid rgba(255,107,157,.25); }
+
+    .card-spark { height: 44px; margin-top: 14px; opacity: .75; }
+
+    /* ── CHARTS ROW ── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px; margin-bottom: 24px;
+    }
+    @media(max-width:860px){ .charts-grid{ grid-template-columns:1fr; } }
+
+    .chart-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(28px);
+      border-radius: 22px; padding: 22px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .chart-card.stacked { display:flex; flex-direction:column; gap:16px; }
+
+    .chart-head {
+      display:flex; align-items:center; gap:8px;
+      font-size:.68rem; letter-spacing:2px; text-transform:uppercase;
+      color:var(--muted); margin-bottom:14px;
+    }
+    .ch-dot { width:8px; height:8px; border-radius:50%; }
+
+    canvas.lg { max-height:230px; }
+    canvas.sm { max-height:110px; }
+
+    /* ── METRICS STRIP ── */
+    .metrics-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; margin-bottom:24px; }
+
+    .metric-glass {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px);
+      border-radius: 16px; padding: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+      transition: transform .2s, border-color .2s;
+    }
+    .metric-glass:hover { transform:scale(1.04); border-color:rgba(108,99,255,.35); }
+    .metric-glass .ml { font-size:.6rem; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+    .metric-glass .mv { font-family:var(--mono); font-size:1.25rem; font-weight:500; }
+    .metric-glass .mbar { height:3px; background:rgba(255,255,255,.08); border-radius:2px; overflow:hidden; margin-top:8px; }
+    .metric-glass .mfill { height:100%; border-radius:2px; transition:width .7s ease; }
+
+    /* ── FOOTER ── */
+    footer {
+      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
+      border-top: 1px solid var(--glass-border); padding-top:18px;
+      font-size:.68rem; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted);
+    }
+    #last-upd { color: var(--c2); }
+
+    /* number reveal */
+    .reveal { animation: rev .35s ease; }
+    @keyframes rev { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+
+    #spin {
+      width:16px;height:16px;border-radius:50%;
+      border:2px solid rgba(72,214,200,.2); border-top-color:var(--c2);
+      animation:sp .8s linear infinite; opacity:0; transition:opacity .2s;
+    }
+    #spin.on{opacity:1}
+    @keyframes sp{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+
+<!-- Background orbs -->
+<div class="bg">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="logo-box">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 3a3 3 0 110 6 3 3 0 010-6zm0 14.2c-2.5 0-4.7-1.3-6-3.2.03-2 4-3.1 6-3.1s5.97 1.1 6 3.1c-1.3 1.9-3.5 3.2-6 3.2z"/></svg>
+      </div>
+      <div class="header-title">
+        <h1>IOT DASHBOARD</h1>
+        <p>Live Sensor Monitoring · Node #01</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="spin"></div>
+      <div class="glass-pill">
+        <div class="pulse"></div>
+        <span id="live-clock">--:--:--</span>
+        <span style="color:var(--muted);font-size:.7rem">· 5s refresh</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ALERTS -->
+  <div id="alerts-wrap">
+    {% for a in alerts %}
+    <div class="alert-pill {{ a.type }}">
+      {{ '⚠️' if a.type=='warning' else ('🔴' if a.type=='danger' else '✅') }}
+      {{ a.msg }}
+    </div>
+    {% endfor %}
+    {% if not alerts %}
+    <div class="alert-pill ok">✅ &nbsp;All systems nominal — no active alerts</div>
+    {% endif %}
+  </div>
+
+  <!-- SENSOR CARDS -->
+  <div class="cards">
+    <div class="card ct">
+      <div class="glow-circle"></div>
+      <div class="card-icon">🌡️</div>
+      <div class="card-label">Temperature</div>
+      <div class="card-value" id="v-temp">{{ temp }}<span class="card-unit">°C</span></div>
+      <div class="card-status" id="s-temp">–</div>
+      <canvas class="card-spark" id="sp-temp"></canvas>
+    </div>
+    <div class="card ch">
+      <div class="glow-circle"></div>
+      <div class="card-icon">💧</div>
+      <div class="card-label">Humidity</div>
+      <div class="card-value" id="v-hum">{{ hum }}<span class="card-unit">%</span></div>
+      <div class="card-status" id="s-hum">–</div>
+      <canvas class="card-spark" id="sp-hum"></canvas>
+    </div>
+    <div class="card cp">
+      <div class="glow-circle"></div>
+      <div class="card-icon">🔵</div>
+      <div class="card-label">Pressure</div>
+      <div class="card-value" id="v-pres">{{ pressure }}<span class="card-unit">hPa</span></div>
+      <div class="card-status" id="s-pres">–</div>
+      <canvas class="card-spark" id="sp-pres"></canvas>
+    </div>
+    <div class="card ca">
+      <div class="glow-circle"></div>
+      <div class="card-icon">🌫️</div>
+      <div class="card-label">Air Quality</div>
+      <div class="card-value" id="v-aqi">{{ aqi }}<span class="card-unit">AQI</span></div>
+      <div class="card-status" id="s-aqi">–</div>
+      <canvas class="card-spark" id="sp-aqi"></canvas>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-head"><span class="ch-dot" style="background:var(--c3)"></span>Temperature &amp; Humidity — History</div>
+      <canvas class="lg" id="ch-main"></canvas>
+    </div>
+    <div class="chart-card stacked">
+      <div>
+        <div class="chart-head"><span class="ch-dot" style="background:var(--c1)"></span>Pressure</div>
+        <canvas class="sm" id="ch-pres"></canvas>
+      </div>
+      <div>
+        <div class="chart-head"><span class="ch-dot" style="background:var(--c4)"></span>Air Quality</div>
+        <canvas class="sm" id="ch-aqi"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- SESSION METRICS -->
+  <div class="metrics-row">
+    <div class="metric-glass">
+      <div class="ml">Temp Max</div>
+      <div class="mv" id="m-tmax" style="color:var(--c3)">--</div>
+      <div class="mbar"><div class="mfill" id="mf-tmax" style="background:var(--c3);width:0%"></div></div>
+    </div>
+    <div class="metric-glass">
+      <div class="ml">Temp Min</div>
+      <div class="mv" id="m-tmin" style="color:var(--c2)">--</div>
+      <div class="mbar"><div class="mfill" id="mf-tmin" style="background:var(--c2);width:0%"></div></div>
+    </div>
+    <div class="metric-glass">
+      <div class="ml">Hum Max</div>
+      <div class="mv" id="m-hmax" style="color:var(--c2)">--</div>
+      <div class="mbar"><div class="mfill" id="mf-hmax" style="background:var(--c2);width:0%"></div></div>
+    </div>
+    <div class="metric-glass">
+      <div class="ml">Hum Min</div>
+      <div class="mv" id="m-hmin" style="color:var(--c1)">--</div>
+      <div class="mbar"><div class="mfill" id="mf-hmin" style="background:var(--c1);width:0%"></div></div>
+    </div>
+    <div class="metric-glass">
+      <div class="ml">Avg Pressure</div>
+      <div class="mv" id="m-pavg" style="color:var(--c1)">--</div>
+      <div class="mbar"><div class="mfill" id="mf-pavg" style="background:var(--c1);width:50%"></div></div>
+    </div>
+    <div class="metric-glass">
+      <div class="ml">AQI Peak</div>
+      <div class="mv" id="m-apeak" style="color:var(--c4)">--</div>
+      <div class="mbar"><div class="mfill" id="mf-apeak" style="background:var(--c4);width:0%"></div></div>
+    </div>
+    <div class="metric-glass">
+      <div class="ml">Data Points</div>
+      <div class="mv" id="m-pts" style="color:var(--c5)">0</div>
+      <div class="mbar"><div class="mfill" id="mf-pts" style="background:var(--c5);width:0%"></div></div>
+    </div>
+    <div class="metric-glass">
+      <div class="ml">Uptime</div>
+      <div class="mv" id="m-uptime" style="color:var(--c5)">0s</div>
+      <div class="mbar"><div class="mfill" style="background:var(--c5);width:100%"></div></div>
+    </div>
+  </div>
+
+  <footer>
+    <span>IOT DASHBOARD</span>
+    <span id="last-upd">Last update: --</span>
+    <span>Flask · Chart.js · © 2026</span>
+  </footer>
+
+</div>
+
+<script>
+/* CLOCK */
+function tick(){ document.getElementById('live-clock').textContent = new Date().toLocaleTimeString('en-IN',{hour12:false}); }
+setInterval(tick,1000); tick();
+
+/* CHART HELPERS */
+const N = 20;
+const chartDefaults = {
+  responsive:true, animation:{duration:400},
+  plugins:{legend:{display:false},tooltip:{
+    backgroundColor:'rgba(13,14,26,0.85)',
+    borderColor:'rgba(255,255,255,0.1)', borderWidth:1,
+    titleColor:'rgba(200,210,255,0.7)', bodyColor:'#fff',
+    padding:10, cornerRadius:10,
+  }},
+  scales:{
+    x:{display:false},
+    y:{grid:{color:'rgba(255,255,255,0.04)'},
+       ticks:{color:'rgba(200,210,255,0.4)',font:{family:'DM Mono',size:10}}}
+  }
+};
+
+/* Main dual-line chart (temp + humidity) */
+const mainChart = new Chart(document.getElementById('ch-main'),{
+  type:'line',
+  data:{
+    labels: Array(N).fill(''),
+    datasets:[
+      { label:'Temp', data:Array(N).fill({{ temp }}),
+        borderColor:'#ff6b9d', backgroundColor:'rgba(255,107,157,0.08)',
+        borderWidth:2, pointRadius:0, tension:.4, fill:true },
+      { label:'Humidity', data:Array(N).fill({{ hum }}),
+        borderColor:'#48d6c8', backgroundColor:'rgba(72,214,200,0.08)',
+        borderWidth:2, pointRadius:0, tension:.4, fill:true }
+    ]
+  },
+  options:{...chartDefaults,
+    plugins:{...chartDefaults.plugins,
+      legend:{display:true,labels:{color:'rgba(200,210,255,0.6)',font:{family:'DM Sans',size:11},
+        boxWidth:10,boxHeight:10,borderRadius:3}}},
+    scales:{...chartDefaults.scales,
+      y:{...chartDefaults.scales.y, suggestedMax:100}}
+  }
+});
+
+function makeSmall(id, color, init, maxH){
+  return new Chart(document.getElementById(id),{
+    type:'line',
+    data:{labels:Array(N).fill(''),
+      datasets:[{data:Array(N).fill(init),borderColor:color,
+        backgroundColor:color+'18',borderWidth:1.5,pointRadius:0,tension:.4,fill:true}]},
+    options:{...chartDefaults,scales:{...chartDefaults.scales,
+      y:{...chartDefaults.scales.y,suggestedMax:maxH}}}
+  });
+}
+
+const chPres = makeSmall('ch-pres','#6c63ff',{{ pressure }},1040);
+const chAqi  = makeSmall('ch-aqi', '#ffc857',{{ aqi }},500);
+
+function makeSpark(id,color,init){
+  return new Chart(document.getElementById(id),{
+    type:'line',
+    data:{labels:Array(12).fill(''),
+      datasets:[{data:Array(12).fill(init),borderColor:color,
+        backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:.4,fill:false}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},
+      plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{x:{display:false},y:{display:false}}}
+  });
+}
+const sparks = {
+  temp: makeSpark('sp-temp','#ff6b9d',{{ temp }}),
+  hum:  makeSpark('sp-hum', '#48d6c8',{{ hum }}),
+  pres: makeSpark('sp-pres','#6c63ff',{{ pressure }}),
+  aqi:  makeSpark('sp-aqi', '#ffc857',{{ aqi }}),
+};
+
+function push(ch, val, idx=0){
+  ch.data.datasets[idx].data.push(val); ch.data.datasets[idx].data.shift();
+  if(idx===0){ ch.data.labels.push(''); ch.data.labels.shift(); }
+  ch.update('none');
+}
+
+/* STATUS */
+function setStatus(id, cls, txt){
+  const el=document.getElementById(id);
+  el.className='card-status '+cls; el.textContent=txt;
+}
+function updateStatuses(d){
+  if(d.temp>38)      setStatus('s-temp','s-crit','🔴 Critical');
+  else if(d.temp>35) setStatus('s-temp','s-warn','⚠️ High');
+  else               setStatus('s-temp','s-ok',  '✅ Normal');
+  if(d.hum>80||d.hum<35) setStatus('s-hum','s-warn','⚠️ Abnormal');
+  else                    setStatus('s-hum','s-ok','✅ Normal');
+  if(d.pressure<990||d.pressure>1025) setStatus('s-pres','s-warn','⚠️ Abnormal');
+  else                                 setStatus('s-pres','s-ok','✅ Normal');
+  if(d.aqi>300)      setStatus('s-aqi','s-crit','🔴 Hazardous');
+  else if(d.aqi>150) setStatus('s-aqi','s-warn','⚠️ Moderate');
+  else               setStatus('s-aqi','s-ok','✅ Good');
+}
+
+/* SESSION STATS */
+const session={temps:[],hums:[],presses:[],aqis:[],pts:0,start:Date.now()};
+function updateMetrics(d){
+  session.temps.push(d.temp); session.hums.push(d.hum);
+  session.presses.push(d.pressure); session.aqis.push(d.aqi); session.pts++;
+  const tmax=Math.max(...session.temps), tmin=Math.min(...session.temps);
+  const hmax=Math.max(...session.hums),  hmin=Math.min(...session.hums);
+  const pavg=(session.presses.reduce((a,b)=>a+b,0)/session.presses.length).toFixed(1);
+  const apeak=Math.max(...session.aqis);
+  document.getElementById('m-tmax').textContent=tmax+'°C';
+  document.getElementById('m-tmin').textContent=tmin+'°C';
+  document.getElementById('m-hmax').textContent=hmax+'%';
+  document.getElementById('m-hmin').textContent=hmin+'%';
+  document.getElementById('m-pavg').textContent=pavg;
+  document.getElementById('m-apeak').textContent=apeak;
+  document.getElementById('m-pts').textContent=session.pts;
+  document.getElementById('mf-tmax').style.width=Math.min((tmax/50)*100,100)+'%';
+  document.getElementById('mf-tmin').style.width=Math.min((tmin/50)*100,100)+'%';
+  document.getElementById('mf-hmax').style.width=hmax+'%';
+  document.getElementById('mf-hmin').style.width=hmin+'%';
+  document.getElementById('mf-apeak').style.width=Math.min((apeak/500)*100,100)+'%';
+  document.getElementById('mf-pts').style.width=Math.min((session.pts/100)*100,100)+'%';
+  const s=Math.floor((Date.now()-session.start)/1000);
+  document.getElementById('m-uptime').textContent=s<60?s+'s':Math.floor(s/60)+'m '+s%60+'s';
+}
+
+/* ALERTS */
+function renderAlerts(alerts){
+  const w=document.getElementById('alerts-wrap');
+  if(!alerts||!alerts.length){
+    w.innerHTML=`<div class="alert-pill ok">✅ &nbsp;All systems nominal — no active alerts</div>`; return;
+  }
+  w.innerHTML=alerts.map(a=>`<div class="alert-pill ${a.type}">${a.type==='warning'?'⚠️':'🔴'} ${a.msg}</div>`).join('');
+}
+
+/* SET VALUE */
+function setVal(id,val,unit){
+  const el=document.getElementById(id);
+  el.innerHTML=val+`<span class="card-unit">${unit}</span>`;
+  el.classList.remove('reveal'); void el.offsetWidth; el.classList.add('reveal');
+}
+
+/* POLL */
+async function poll(){
+  const sp=document.getElementById('spin'); sp.classList.add('on');
+  try{
+    const res=await fetch('/data'); const d=await res.json();
+    setVal('v-temp',d.temp,'°C'); setVal('v-hum',d.hum,'%');
+    setVal('v-pres',d.pressure,'hPa'); setVal('v-aqi',d.aqi,'AQI');
+
+    push(mainChart, d.temp, 0);
+    push(mainChart, d.hum,  1);
+    push(chPres, d.pressure);
+    push(chAqi,  d.aqi);
+
+    ['temp','hum','pres','aqi'].forEach(k=>{
+      const v={temp:d.temp,hum:d.hum,pres:d.pressure,aqi:d.aqi}[k];
+      sparks[k].data.datasets[0].data.push(v);
+      sparks[k].data.datasets[0].data.shift();
+      sparks[k].update('none');
+    });
+
+    updateStatuses(d); renderAlerts(d.alerts); updateMetrics(d);
+    document.getElementById('last-upd').textContent='Last update: '+new Date().toLocaleTimeString('en-IN',{hour12:false});
+  }catch(e){console.error(e);}
+  finally{ sp.classList.remove('on'); }
+}
+
+/* INIT */
+updateStatuses({temp:{{ temp }},hum:{{ hum }},pressure:{{ pressure }},aqi:{{ aqi }}});
+updateMetrics({temp:{{ temp }},hum:{{ hum }},pressure:{{ pressure }},aqi:{{ aqi }}});
+setInterval(poll,5000);
+</script>
+</body>
+</html>
